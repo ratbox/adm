@@ -1,0 +1,33 @@
+# Source this file in bash:
+#
+#	. adm/install-puppet
+#
+set -e
+
+if [[ ! -x '/opt/puppetlabs/bin/puppet' ]]
+then
+	apt-get install lsb-release wget software-properties-common apt-transport-https
+
+	declare -r debname="puppet7-release-$(lsb_release -sc).deb"
+	declare -r debfile="${TMPDIR:-/tmp}/${debname}"
+
+	wget -O "${debfile}" "https://apt.puppetlabs.com/${debname}"
+	dpkg -i "${debfile}"
+	rm "${debfile}"
+
+	apt-get update
+	# udev is a dirty fix for missing udevadm bug in jhoblitt-udev
+	apt-get install puppet-agent udev
+
+	if [[ -f /etc/profile.d/puppet-agent.sh ]]
+	then
+		. /etc/profile.d/puppet-agent.sh
+	fi
+
+	puppet config set server "${PUPPET_SERVER:-puppet.vxnet.cc}"
+	systemctl stop puppet
+fi
+
+set +e
+
+# vim: ts=4 sw=4 noet
